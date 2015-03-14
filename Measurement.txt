@@ -1,0 +1,10 @@
+time from falling edge to rising edge in micro seconds
+4130 off 
+3130 on
+
+
+Pulse width time
+1020 off
+2020 on
+
+
