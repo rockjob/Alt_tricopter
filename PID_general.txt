@@ -1,0 +1,4 @@
+Parameters and what they do (sort of)
+P_Param:  the bigger the number the harder the controller pushes.
+I_Param:  the SMALLER the number (except for 0, which turns it off,)  the more quickly the controller reacts to load changes, but the greater the risk of oscillations.
+D_Param: the bigger the number  the more the controller dampens oscillations (to the point where performance can be hindered)
