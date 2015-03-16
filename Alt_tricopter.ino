@@ -1,6 +1,4 @@
 
-
-
 #include <I2C.h>
 //#include <Wire.h>
 #include <t5403.h>
@@ -14,7 +12,7 @@
 
 
 double mean2;
-double Kp = 3, Ki = 0.5, Kd = 0.25, pressure_target, current_pressure, PID_output;
+double Kp = 20, Ki = 2, Kd = 2, pressure_target, current_pressure, PID_output;
 
 
 unsigned long ulToggleTimer, ulPrevToggleTimer, lastserialtime, calculatedtime, modetimer;
@@ -24,7 +22,6 @@ unsigned int prevpinvalue, modepinvalue, Current_mode, OutputValue;
 T5403 barometer(MODE_I2C);
 PID myPID(&current_pressure, &PID_output, &pressure_target, Kp, Ki, Kd, REVERSE);
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   barometer.begin();
 
@@ -43,8 +40,6 @@ void setup() {
 
   Timer3.initialize(5000);
   Timer3.stop();
-  //TCCR2B = TCCR2B & 0b11111000 | 64; //490Hz for pin 11 output pwm
-
 }
 
 void throttle_rising() {
@@ -68,30 +63,17 @@ void throttle_falling() {
 }
 
 void mode_change_rising() {
-
-
-
   detachInterrupt(0);
-
   Timer1.restart();
   Timer1.start();
-
-
-  //prevpinvalue = HIGH;
   attachInterrupt(0, mode_change_falling, FALLING);
-
 }
 
 void mode_change_falling() {
-
   detachInterrupt(0);
-
   calculatedtime = Timer1.read();
   Timer1.stop();
-
   prevpinvalue = LOW;
-
-
   if ((calculatedtime > 1000) && (calculatedtime < 2500)) {
     if (calculatedtime > 1500) {
       modepinvalue = HIGH;
@@ -113,13 +95,8 @@ void mode_change_falling() {
       Serial.println(calculatedtime);
     }*/
   }
-
-
   attachInterrupt(0, mode_change_rising, RISING);
-
 }
-
-
 
 int verify_pressure(double x) {
   if ((x > 102000) || (x < 99000)) {
@@ -129,8 +106,6 @@ int verify_pressure(double x) {
 }
 
 void loop() {
-  //Serial.println(Current_mode);
-
   if (modepinvalue == LOW) { //manual throttle
     //Serial.println("Channel 5 low");
     if (Current_mode == 1)
@@ -140,21 +115,16 @@ void loop() {
       myPID.SetMode(MANUAL);
     }
     //Code for throttle passthrough here. Not required. Handled in interrupts.
-
-
   } else if (modepinvalue == HIGH) { //Alt hold
-
     if (Current_mode == 0) {
       detachInterrupt(0);
       digitalWrite(13, HIGH);
       // Serial.println(Current_mode);
       //Setup hold ALT
-      //Serial.println("Entering AUTO mode");
+      Serial.println("Entering AUTO mode");
       //if ((millis() - modetimer) < 1000 ) goto exitfirstauto; //switch debouncing for high speed loop later
       //  modetimer = millis();
-
       double samplepressure[5];
-
 #if 1
 sampling:
       //Need to add timeout here to sampling just incase it gets stuck here. Loop = no throttle
@@ -181,12 +151,15 @@ sampling:
 #else
       pressure_target = barometer.getPressure(MODE_ULTRA);
 #endif
-      Current_mode = 1;
-      //Serial.println(pressure_target);
+
+      Serial.println(pressure_target);
       myPID.SetMode(AUTOMATIC); //turn on PID
-exitfirstauto:
       digitalWrite(13, LOW);
-      modepinvalue = LOW;
+      //modepinvalue = LOW;
+      Current_mode = 1;
+exitfirstauto:
+
+
       attachInterrupt(0, mode_change_rising, RISING);
 
 
@@ -198,7 +171,9 @@ exitfirstauto:
       current_pressure = barometer.getPressure(MODE_ULTRA);
       myPID.Compute();
 
-      //      Serial.println(PID_output);
+      Serial.print(PID_output);
+      Serial.print(" ");
+      Serial.println(current_pressure);
       //PID myPID(&current_pressure, &PID_output, &pressure_target, Kp, Ki, Kd, REVERSE);
 #if 0
       Serial.println("PID details");
@@ -223,19 +198,12 @@ exitfirstauto:
       Timer3.attachInterrupt(auto_output, OutputValue);
     }
   }
-  delay(100);
+  //delay(100);
 }//end main loop
-
 
 void auto_output() {
   Timer3.detachInterrupt();
   digitalWrite(CHANNEL_OUTPUT, LOW);
   digitalWrite(13, LOW);
-  Serial.println("auto_output interrupt worked");
   Timer3.attachInterrupt(auto_output, (5130 - OutputValue));
-  //if(Current_mode ==1){
-  //Timer 2 make pulse
-  //   digitalWrite(CHANNEL_OUTPUT, LOW);
-
-  //}
 }
