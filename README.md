@@ -12,3 +12,7 @@ In automatic mode a pressure is set as a target and then a PID adjusts the throt
 This was programed on a Leonardo Arduino using aT5403 break out board.
 
 The stock library for I2C causes hangs. I used https://github.com/rambo/I2C and modified the sparkfun T5403 libraries https://github.com/sparkfun/T5403_Barometric_Breakout to function.
+
+Timer one and Timer three librarys are required.
+
+https://github.com/PaulStoffregen/TimerOne https://github.com/PaulStoffregen/TimerThree
